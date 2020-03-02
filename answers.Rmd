@@ -1,0 +1,66 @@
+---
+title: "Practice Exam"
+author: "Karl Rohe"
+date: "2/27/2020"
+output: html_document
+---
+  
+```{r hide = T}
+library(tidyverse)
+library(nycflights13)
+# flights
+# weather
+```
+
+
+Make a plot with three facets, one for each airport in the weather data.  The x-axis should be the day of the year (1:365) and the y-axis should be the mean temperature recorded on that day, at that airport.
+```{r}
+library(lubridate)
+weather %>% mutate(day_of_year = yday(time_hour)) %>% 
+  group_by(origin, day_of_year) %>% 
+  summarize(temp = mean(temp, na.rm=T)) %>% 
+  ggplot(aes(x = day_of_year, y = temp)) +
+  geom_line()+facet_wrap(~origin)
+```
+
+
+Make a non-tidy matrix of that data where each row is an airport and each column is a day of the year.  
+
+```{r}
+weather %>% mutate(day_of_year = yday(time_hour)) %>% 
+  group_by(origin, day_of_year) %>% 
+  summarize(temp = mean(temp, na.rm=T)) %>% 
+  pivot_wider(names_from=day_of_year, values_from = temp)
+```
+
+
+For each (airport, day) contruct a tidy data set of the airport's "performance" as the proportion of flights that departed less than an hour late. 
+```{r}
+perf = flights %>% mutate(day_of_year = yday(time_hour)) %>% 
+  group_by(origin, day_of_year) %>% 
+  summarize(performance = mean(dep_delay<60, na.rm = T)) 
+```
+
+Construct a tidy data set to that give weather summaries for each (airport, day).  Use the total precipitation, minimum visibility, maximum wind_gust, and average wind_speed.  
+```{r}
+weat = weather %>% mutate(day_of_year = yday(time_hour)) %>% 
+  group_by(origin, day_of_year) %>% 
+  summarize(precipitation = sum(precip, na.rm=T), 
+            visibility = min(visib, na.rm=T), 
+            windMean = mean(wind_speed, na.rm=T)) 
+```
+
+Construct a linear model to predict the performance of each (airport,day) using the weather summaries and a "fixed effect" for each airport.  Display the summaries.  
+```{r}
+data = left_join(perf, weat)
+fit = lm(performance ~ origin+precipitation+visibility+windMean, data = data)
+summary(fit)
+```
+
+Repeat the above, but only for EWR.  Obviously, exclude the fixed effect for each airport.
+```{r}
+dataEWR = filter(data, origin == "EWR")
+fitEWR = lm(performance ~ precipitation+visibility+windMean, data = dataEWR)
+summary(fitEWR)
+
+```
