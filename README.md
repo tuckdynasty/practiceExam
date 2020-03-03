@@ -2,7 +2,7 @@
 title: "Practice Exam Tucker Skaar"
 author: "Tucker Skaar"
 date: "3/2/2020"
-output: rmarkdown::github_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
